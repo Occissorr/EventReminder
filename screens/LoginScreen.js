@@ -1,23 +1,44 @@
-import React, { useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, BackHandler, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { globalStyles, colors, spacing, fontSizes } from '../assets/styles';
+import { ThemeContext } from '../context/ThemeContext';
+import { AppContext } from '../context/AppContext';
+import PasswordInput from '../components/PasswordInput';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const { theme } = useContext(ThemeContext);
+  const { userData } = useContext(AppContext);
 
   const handleLogin = () => {
-    // Dummy login logic
-    if (email && password) {
-      navigation.navigate('Main');
+    if (userData) {
+      if (email === userData.email && password === userData.password) {
+        navigation.navigate('HomeScreen'); // Navigate to HomeScreen on successful login
+      } else {
+        setErrors({ login: 'Password or Email is incorrect!' });
+      }
     } else {
-      alert('Please enter valid credentials!');
+      setErrors({ login: 'User does not exist, try Signing up!' });
     }
   };
+
+  useEffect(() => {
+    if (userData) {
+      setEmail(userData.email);
+      setPassword(userData.password);
+    }
+  }, [userData]);
 
   const handleSignUp = () => {
     navigation.navigate('Signup');
   };
+
+  const handleForgotPassword = () => {
+    navigation.navigate('Reset');
+  }
 
   const backAction = () => {
     Alert.alert('Exit App', 'Are you sure you want to exit?', [
@@ -37,74 +58,58 @@ const LoginScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <View style={[
+      globalStyles.container,
+      globalStyles.center,
+      { backgroundColor: theme.colors.background }
+    ]}>
+      <Text style={[globalStyles.title, { color: theme.colors.text }]}>Login</Text>
       <TextInput
-        style={styles.input}
+        style={[globalStyles.input, styles.width, styles.input, {
+          color: theme.colors.text,
+          backgroundColor: theme.colors.background
+        }]}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        placeholderTextColor={theme.colors.text}
       />
-      <TextInput
-        style={styles.input}
+      <PasswordInput
+        style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.text }]}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
+        placeholderTextColor={theme.colors.text}
+        accessibilityLabel="Password"
+        inputStyle={{ color: theme.colors.text }}
+        accessible={true}
+        containerStyle={[{ marginBottom: 20, backgroundColor: theme.colors.background }, styles.width, ]}
+        iconColor={theme.colors.overlay}
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      {errors.login && <Text style={styles.errorText}>{errors.login}</Text>}
+      <TouchableOpacity style={globalStyles.buttonPrimary} onPress={handleLogin}>
+        <Text style={globalStyles.buttonText}>Login</Text>
       </TouchableOpacity>
-      <Text style={styles.anchor} onPress={handleSignUp}>Need Help Signing</Text>
-      <Text style={styles.anchor} onPress={handleSignUp}>Sign Up For New Account</Text>
+      <Text style={globalStyles.anchor} onPress={handleForgotPassword}>Need Help Signing</Text>
+      <Text style={globalStyles.anchor} onPress={handleSignUp}>Sign Up For New Account</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f0f8ff',
-    alignItems: 'center',
-    justifyContent: 'center', // Center the content vertically
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    color: '#333',
-    width: '100%', // Make inputs responsive
-    maxWidth: 300, // Optional: Set a max-width for large screens
-  },
-  button: {
-    backgroundColor: '#007BFF',
+    width: '100%',
     padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: '100%', // Make button responsive
-    maxWidth: 300, // Optional: Set a max-width for large screens
-    marginBottom: 15, // Add spacing below the button
+    marginBottom: 20,
   },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  width: {
+    maxWidth: 300,
   },
-  anchor: {
-    textDecorationStyle: 'solid',
-    color: '#007BFF',
-    textDecorationLine: 'underline',
-    textDecorationColor: '#007BFF',
-    marginTop: 10, // Add spacing between anchors
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10,
   },
 });
 

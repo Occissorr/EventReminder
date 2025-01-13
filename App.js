@@ -2,19 +2,20 @@ import React, { useContext } from 'react';
 import { StatusBar } from 'react-native';
 import AppNavigator from './navigator/AppNavigator.js';
 import { ThemeProvider, ThemeContext } from './context/ThemeContext';
+import { AppProvider } from './context/AppContext';
 
 const App = () => {
   return (
-    <ThemeProvider>
-      <ThemedApp />
-    </ThemeProvider>
+      <AppProvider>
+        <ThemeProvider>
+          <ThemedApp />
+        </ThemeProvider>
+      </AppProvider>
   );
 };
 
-
 const ThemedApp = () => {
   const { theme } = useContext(ThemeContext);
-  const hightlightColor = '#db7987';
   return (
     <>
       <StatusBar

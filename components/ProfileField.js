@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
+import PasswordInput from './PasswordInput';
 
 export const ProfileField = ({
   label,
@@ -9,23 +10,40 @@ export const ProfileField = ({
   text,
   placeholder,
   isEditing,
-  keyboardType
+  keyboardType,
+  isPassword
 }) => {
+  const { theme } = useContext(ThemeContext);
+  const textColor = theme.colors.text;
+  const displayText = isPassword ? `${text[0]}${'*'.repeat(text.length - 1)}` : text;
 
-    const { theme } = useContext(ThemeContext);
-    const textColor = theme.colors.text;
   return (
     <View style={[isEditing ? styles.inputContainer : styles.editContainer]}>
       <Text style={[styles.label, { color: textColor }]}>{label}</Text>
       {isEditing ? (
-        <TextInput
-          style={styles.input}
-          value={tempValue}
-          onChangeText={change}
-          placeholder={placeholder}
-        />
+        isPassword ? (
+          <PasswordInput
+            value={tempValue}
+            onChangeText={change}
+            placeholder={placeholder}
+            placeholderTextColor={theme.colors.text}
+            containerStyle={{ marginBottom: 20, backgroundColor: theme.colors.background }}
+            inputStyle={{ color: theme.colors.text }}
+            iconColor={theme.colors.overlay}
+            accessible={true}
+            accessibilityLabel={label}
+          />
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={tempValue}
+            onChangeText={change}
+            placeholder={placeholder}
+            keyboardType={keyboardType}
+          />
+        )
       ) : (
-        <Text style={[styles.text, { color: textColor }]}>{text}</Text>
+        <Text style={[styles.text, { color: textColor }]}>{displayText}</Text>
       )}
     </View>
   );

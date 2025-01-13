@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -9,6 +9,7 @@ import {
   faSignOutAlt,
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
+import { ThemeContext } from '../context/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
   const settingsList = [
@@ -37,14 +38,6 @@ const SettingsScreen = ({ navigation }) => {
       },
     },
     {
-      id: '4',
-      name: 'Notification Preferences',
-      icon: faBell,
-      function: () => {
-        navigation.navigate('SettingsStack', { screen: 'Notification Preferences' });
-      },
-    },
-    {
       id: '5',
       name: 'Privacy Settings',
       icon: faLock,
@@ -62,23 +55,24 @@ const SettingsScreen = ({ navigation }) => {
       color: 'red'
     },
   ];
+  const { theme } = useContext(ThemeContext);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background}]}>
       <FlatList
         data={settingsList}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
             <Pressable
               style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.menuItemPressed,
+                styles.menuItem, 
+                pressed && { backgroundColor: theme.colors.highlight },
               ]}
               onPress={item.function}
             >
-              <FontAwesomeIcon color={ item.color? item.color : ''} icon={item.icon} size={24} style={styles.icon} />
+              <FontAwesomeIcon color={ item.color? item.color : theme.colors.text} icon={item.icon} size={24} style={styles.icon} />
               <Text style={[
-                styles.text,
+                styles.text, { color: theme.colors.text},
                 item.name === 'Logout' && styles.LogoutText
               ]}>{item.name}</Text>
             </Pressable>
@@ -86,7 +80,7 @@ const SettingsScreen = ({ navigation }) => {
       />
       {/* App Version shown at the bottom */}
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>App Version: 1.0.1</Text>
+        <Text style={[styles.versionText, { color: theme.colors.text }]}>App Version: 1.0.1</Text>
       </View>
     </View>
   );
@@ -101,7 +95,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
     marginTop: 10,
-    color: 'inherit'
   },
   menuItem: {
     padding: 10,
@@ -110,11 +103,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    
-  },
-  menuItemPressed: {
-    backgroundColor: 'rgb(0, 123, 255)',
-    color: 'white'
   },
   versionContainer: {
     padding: 20,

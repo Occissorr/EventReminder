@@ -9,7 +9,7 @@ import { ThemeContext } from '../context/ThemeContext'; // Import the ThemeConte
 import LoginScreen from '../screens/LoginScreen.js';
 import SignupScreen from '../screens/SignupScreen.js';
 import HomeScreen from '../screens/HomeScreen.js';
-import CalendarScreen from '../screens/CalenderScreen.js';
+import AddEventScreen from '../screens/AddEventScreen.js';
 import SettingsScreen from '../screens/SettingsScreen.js';
 
 // Settings Screens
@@ -18,7 +18,7 @@ import ProfileScreen from '../screens/settings/ProfileScreen.js';
 import ReminderScreen from '../screens/settings/ReminderScreen.js';
 import NotificationPreferencesScreen from '../screens/settings/NotificationPreferencesScreen.js';
 import PrivacyScreen from '../screens/settings/PrivacyScreen.js';
-import { globalStyles } from '../assets/styles.js';
+import PasswordResetScreen from '../screens/PasswordresetScreen.js';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -26,7 +26,7 @@ const Tab = createBottomTabNavigator();
 // Tab Navigator for Home and Settings
 const HomeTabs = () => {
   const { theme } = useContext(ThemeContext); // Access theme context
-  
+
 
   return (
     <Tab.Navigator
@@ -45,14 +45,24 @@ const HomeTabs = () => {
         tabBarStyle: { backgroundColor: theme.colors.background }, // Apply background color to tab bar
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen
+        options={{
+          headerStyle: { backgroundColor: theme.colors.background }, // Apply header background color
+          headerTintColor: theme.colors.text, // Apply header text color
+        }}
+        name="Home" component={HomeScreen} />
+      <Tab.Screen
+        options={{
+          headerStyle: { backgroundColor: theme.colors.background }, // Apply header background color
+          headerTintColor: theme.colors.text, // Apply header text color
+        }}
+        name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 };
 
 const SettingsStack = () => {
-  const { theme } = useContext(ThemeContext); // Access theme context
+  const { theme } = useContext(ThemeContext);
 
   return (
     <Stack.Navigator>
@@ -115,8 +125,9 @@ const AppNavigator = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="Calendar" component={CalendarScreen} />
+        <Stack.Screen name="Addevent" component={AddEventScreen} />
         <Stack.Screen name="Main" component={HomeTabs} />
+        <Stack.Screen name="Reset" component={PasswordResetScreen} />
         <Stack.Screen name="SettingsStack" component={SettingsStack} />
       </Stack.Navigator>
     </NavigationContainer>
