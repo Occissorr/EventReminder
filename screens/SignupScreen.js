@@ -4,7 +4,7 @@ import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
 import axios from 'axios';
 import PasswordInput from '../components/PasswordInput'; // Import the new component
-import { API_BASE_URL } from '../assets/constants.js'; // Import API base URL
+import { API_BASE_URL, ReminderFrequency, ReminderRange } from '../assets/constants.js'; // Import API base URL
 import { AppContext } from '../context/AppContext'; // Import AppContext
 
 const SignupScreen = ({ navigation }) => {
@@ -86,28 +86,40 @@ const SignupScreen = ({ navigation }) => {
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-      const message = await signupUser(name, email, password);
-      Alert.alert('Success', message);
-      setIsOtpSent(true); // Set OTP sent state to true
-      setResendTimer(50); // Reset resend timer
-
-      // Store user data in local storage
-      const userData = {
-        name,
-        email,
-        password,
-        theme,
-        signupDate: new Date().toISOString(),
-      };
-      await removeUserData(); // Remove previous user data if exists
-      await storeUserData(userData); // Store new user data
-      console.log('User data stored:', userData);
+        // Store user data in local storage
+        const userData = {
+          loggedIn:true,
+            name,
+            email,
+            password,
+            events: [],
+            mobile: '',
+            loggedIn: true,
+            settings: {
+                theme: theme.name,
+                dataSharing: false,
+                cloudStorage: false,
+                notifications: true,
+                reminder: {
+                    range: ReminderRange.MONTH,
+                    frequency: ReminderFrequency.MONTHLY,
+                },
+            },
+            signupDate: new Date().toISOString(),
+        };
+        const message = await signupUser(userData);
+        Alert.alert('Success', message);
+        setIsOtpSent(true); // Set OTP sent state to true
+        setResendTimer(50); // Reset resend timer
+        await removeUserData(); // Remove previous user data if exists
+        await storeUserData(userData); // Store new user data
+        console.log('User data stored:', userData);
     } catch (error) {
-      Alert.alert('Error', error.message);
+        Alert.alert('Error', error.message);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   // Handle OTP Resend
   const handleResendOtp = async () => {
@@ -233,7 +245,7 @@ const SignupScreen = ({ navigation }) => {
         </>
       )}
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')} accessible={true} accessibilityLabel="Already have an account? Login">
+      <TouchableOpacity onPress={() => navigation.replace('Login')} accessible={true} accessibilityLabel="Already have an account? Login">
         <Text style={styles.anchor}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>

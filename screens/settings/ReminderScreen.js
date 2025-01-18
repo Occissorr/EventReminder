@@ -4,18 +4,8 @@ import { Picker } from '@react-native-picker/picker';
 import { ThemeContext } from '../../context/ThemeContext';
 import { AppContext } from '../../context/AppContext'; // Import AppContext
 import { globalStyles } from '../../assets/styles';
+import { ReminderFrequency, ReminderRange } from '../../assets/constants';
 
-const ReminderFrequency = {
-    DAILY: 'Daily',
-    WEEKLY: 'Weekly',
-    MONTHLY: 'Monthly',
-};
-
-const ReminderRange = {
-    WEEK: 'Week',
-    MONTH: 'Month',
-    YEAR: 'Year',
-};
 
 const ReminderScreen = ({ navigation }) => {
     const { theme } = useContext(ThemeContext);

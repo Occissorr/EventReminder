@@ -4,14 +4,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faUser,
   faPalette,
-  faBell,
   faLock,
   faSignOutAlt,
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { ThemeContext } from '../context/ThemeContext';
+import { AppContext } from '../context/AppContext';
 
-const SettingsScreen = ({ navigation }) => {
+const SettingsScreen = ({ navigation, userData }) => {
+  const { storeUserData } = useContext(AppContext);
+
   const settingsList = [
     {
       id: '1',
@@ -46,11 +48,20 @@ const SettingsScreen = ({ navigation }) => {
       },
     },
     {
+      id: '7',
+      name: 'Notification Preferences',
+      icon: faLock,
+      function: () => {
+        navigation.navigate('SettingsStack', { screen: 'Notification Preferences' });
+      },
+    },
+    {
       id: '6',
       name: 'Logout',
       icon: faSignOutAlt,
       function: () => {
-        navigation.navigate('Login');
+        navigation.replace('Login');
+        storeUserData({...userData, loggedIn: false});
       },
       color: 'red'
     },

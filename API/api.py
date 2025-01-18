@@ -72,13 +72,9 @@ def signup():
     try:
         # Send OTP via email
         with SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
-            print('1')
             smtp.starttls()
-            print('2')
             smtp.login(EMAIL_USER, EMAIL_PASS)
-            print('3')
             smtp.sendmail(EMAIL_USER, email, f"Subject: Signup OTP\n\nYour OTP is {otp}")
-            print('4')
         # Store user details and OTP in MongoDB
         user = {'email': email, 'name': name, 'password': password, 'otp': otp}
         user_collection.replace_one({'email': email}, user, upsert=True)
@@ -121,4 +117,4 @@ def resend_otp():
 if __name__ == '__main__':
     # Sync local JSON with MongoDB on startup
     sync_with_mongo()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

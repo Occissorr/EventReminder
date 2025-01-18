@@ -11,35 +11,54 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const { theme } = useContext(ThemeContext);
-  const { userData } = useContext(AppContext);
+  const { loginUser, storeUserData } = useContext(AppContext);
 
-  const handleLogin = () => {
-    if (userData) {
-      if (email === userData.email && password === userData.password) {
-        navigation.navigate('HomeScreen'); // Navigate to HomeScreen on successful login
+  // Handle user login
+  const handleLogin = async () => {
+    try {
+      const response = await loginUser(email, password);
+      const data = await response.json();
+      if (response.ok) {
+        const userData = {
+          loggedIn: true,
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          events: [],
+          mobile: data.mobile || '',
+          settings: {
+            theme: theme.name,
+            dataSharing: false,
+            cloudStorage: false,
+            notifications: true,
+            reminder: {
+              range: ReminderRange.MONTH,
+              frequency: ReminderFrequency.MONTHLY,
+            },
+          },
+          signupDate: new Date().toISOString(),
+        };
+        await storeUserData(userData);
+        navigation.replace('Main');
       } else {
-        setErrors({ login: 'Password or Email is incorrect!' });
+        setErrors({ login: data.message });
       }
-    } else {
-      setErrors({ login: 'User does not exist, try Signing up!' });
+    } catch (error) {
+      setErrors({ login: error.message });
     }
   };
 
-  useEffect(() => {
-    if (userData) {
-      setEmail(userData.email);
-      setPassword(userData.password);
-    }
-  }, [userData]);
-
+  // Navigate to Signup screen
   const handleSignUp = () => {
     navigation.navigate('Signup');
   };
 
+  // Navigate to Reset Password screen
   const handleForgotPassword = () => {
     navigation.navigate('Reset');
   }
 
+  // Handle back button press
   const backAction = () => {
     Alert.alert('Exit App', 'Are you sure you want to exit?', [
       { text: 'Cancel', onPress: () => null, style: 'cancel' },

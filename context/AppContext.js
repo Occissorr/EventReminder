@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../assets/constants';
 import axios from 'axios';
 
 export const AppContext = createContext();
@@ -7,7 +8,7 @@ export const AppContext = createContext();
 export const AppProvider = ({ children }) => {
     const [MainEventArr, setEvents] = useState([]);
     const [userData, setUserData] = useState(null);
-    const API_BASE_URL = 'http://127.0.0.1:5000'; // Replace with your Flask API base URL
+    const [usersArr, setUsersArr] = useState([]);
 
     // Load events from AsyncStorage
     const loadEvents = async () => {
@@ -55,11 +56,13 @@ export const AppProvider = ({ children }) => {
 
     // Load user data from AsyncStorage
     const loadUserData = async () => {
-        console.log('Loading user data');
         try {
             const localUserData = await AsyncStorage.getItem('userData');
+            const response = await axios.get(`${API_BASE_URL}/get-users`);
+            if (response.status === 200) {
+                setUsersArr(response.data.users);
+            }
             if (localUserData) {
-                console.log('User data loaded:', JSON.parse(localUserData));
                 setUserData(JSON.parse(localUserData));
             }
         } catch (e) {
@@ -70,6 +73,7 @@ export const AppProvider = ({ children }) => {
     // Store user data in AsyncStorage
     const storeUserData = async (userData) => {
         try {
+            setUserData(userData);
             await AsyncStorage.setItem('userData', JSON.stringify(userData));
         } catch (error) {
             console.error('Failed to store user data:', error);
@@ -87,15 +91,43 @@ export const AppProvider = ({ children }) => {
     };
 
     // API: User Signup
-    const signupUser = async (name, email, password) => {
+    const signupUser = async (data) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/signup`, { name, email, password });
+            const response = await axios.post(`${API_BASE_URL}/signup`, data);
             if (response.status === 201) {
+                const { token, userData } = response.data;
+                await AsyncStorage.setItem('authToken', token);
+                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                setUserData(userData);
                 return response.data.message;
             }
         } catch (error) {
             console.error('Signup failed:', error.response?.data || error.message);
             throw new Error(error.response?.data?.message || 'Signup failed');
+        }
+    };
+
+    // API: User Login
+    const loginUser = async (email, password) => {
+        try {
+            // Check if the user exists in usersArr
+            const user = usersArr.find((user) => user.email === email);
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            // Proceed with API login
+            const response = await axios.post(`${API_BASE_URL}/login`, { email, password });
+            if (response.status === 200) {
+                const { token, userData } = response.data;
+                await AsyncStorage.setItem('authToken', token);
+                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                setUserData(userData);
+                return response.data;
+            }
+        } catch (error) {
+            console.error('Login failed:', error.response?.data || error.message);
+            throw new Error(error.response?.data?.message || 'Login failed');
         }
     };
 
@@ -115,10 +147,18 @@ export const AppProvider = ({ children }) => {
     // API: Sync Events with DB
     const syncEventsWithDB = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/events`, { headers: { email: userData?.email } });
-            const dbEvents = response.data.events;
-            setEvents(dbEvents);
-            await storeEvents(dbEvents);
+            if (userData?.email) {
+                const token = await AsyncStorage.getItem('authToken'); // Retrieve the token from AsyncStorage
+                const response = await axios.get(`${API_BASE_URL}/events`, {
+                    headers: { 
+                        email: userData.email,
+                        Authorization: `Bearer ${token}` // Include the token in the headers
+                    }
+                });
+                const dbEvents = response.data.events;
+                setEvents(dbEvents);
+                await storeEvents(dbEvents);
+            }
         } catch (error) {
             console.error('Error syncing events with DB:', error);
         }
@@ -157,9 +197,12 @@ export const AppProvider = ({ children }) => {
                 storeUserData,
                 removeUserData,
                 signupUser,
+                loginUser,
                 resendOTP,
                 syncEventsWithDB,
                 pushEventsToDB,
+                loadUserData,
+                usersArr,
             }}
         >
             {children}
