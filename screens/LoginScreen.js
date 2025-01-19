@@ -1,10 +1,11 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, BackHandler, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { globalStyles, colors, spacing, fontSizes } from '../assets/styles';
+import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
 import { AppContext } from '../context/AppContext';
 import PasswordInput from '../components/PasswordInput';
+import { validateEmail } from '../assets/constants';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,12 @@ const LoginScreen = ({ navigation }) => {
 
   // Handle user login
   const handleLogin = async () => {
+    if(!email || !password) {
+      return;
+    }else if(!validateEmail(email)) {
+      setErrors({ login: `Enter a valid Email !` });
+      return;
+    }
     try {
       const response = await loginUser(email, password);
       const data = await response.json();
@@ -129,6 +136,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -10,
     marginBottom: 10,
+    height: 15
   },
 });
 

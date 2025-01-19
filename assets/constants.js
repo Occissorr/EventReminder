@@ -18,3 +18,17 @@ export const ReminderRange = {
     MONTH: 'Month',
     YEAR: 'Year',
 };
+
+//#region Functions
+
+/**
+ * Email Format Validation
+ * @param {*} email 
+ * @returns 
+ */
+export const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
+//#endregion

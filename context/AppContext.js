@@ -58,12 +58,12 @@ export const AppProvider = ({ children }) => {
     const loadUserData = async () => {
         try {
             const localUserData = await AsyncStorage.getItem('userData');
-            const response = await axios.get(`${API_BASE_URL}/get-users`);
-            if (response.status === 200) {
-                setUsersArr(response.data.users);
-            }
             if (localUserData) {
                 setUserData(JSON.parse(localUserData));
+                const response = await axios.get(`${API_BASE_URL}/get-users`);
+                if (response.status === 200) {
+                    setUsersArr(response.data.users);
+                }
             }
         } catch (e) {
             console.error('Error loading user data:', e);
@@ -90,20 +90,15 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    // API: User Signup
-    const signupUser = async (data) => {
+    // API: Send OTP
+    const sendOTP = async (email) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/signup`, data);
-            if (response.status === 201) {
-                const { token, userData } = response.data;
-                await AsyncStorage.setItem('authToken', token);
-                await AsyncStorage.setItem('userData', JSON.stringify(userData));
-                setUserData(userData);
+            const response = await axios.post(`${API_BASE_URL}/send-otp`, { email });
+            if (response.status === 200) {
                 return response.data.message;
             }
         } catch (error) {
-            console.error('Signup failed:', error.response?.data || error.message);
-            throw new Error(error.response?.data?.message || 'Signup failed');
+            throw new Error(error.response?.data?.message || 'Failed to send OTP');
         }
     };
 
@@ -126,8 +121,7 @@ export const AppProvider = ({ children }) => {
                 return response.data;
             }
         } catch (error) {
-            console.error('Login failed:', error.response?.data || error.message);
-            throw new Error(error.response?.data?.message || 'Login failed');
+            throw new Error(error.response?.data?.message || 'Login failed! Email Does not exist');
         }
     };
 
@@ -144,23 +138,73 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // Function to refresh token
+    const refreshToken = async () => {
+        try {
+            const token = await AsyncStorage.getItem('authToken');
+            const response = await axios.post(`${API_BASE_URL}/refresh-token`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.status === 200) {
+                const newToken = response.data.token;
+                await AsyncStorage.setItem('authToken', newToken);
+                return newToken;
+            }
+        } catch (error) {
+            if (error.response?.status === 404) {
+                console.error('Refresh token endpoint not found.');
+            } else {
+                console.error('Error refreshing token:', error.response?.data || error.message);
+            }
+            throw new Error('Failed to refresh token');
+        }
+    };
+
     // API: Sync Events with DB
     const syncEventsWithDB = async () => {
         try {
-            if (userData?.email) {
-                const token = await AsyncStorage.getItem('authToken'); // Retrieve the token from AsyncStorage
+            if (!userData?.email) {
+                console.error('User email is missing.');
+                return;
+            }
+
+            let token = await AsyncStorage.getItem('authToken');
+            if (!token) {
+                console.error('Auth token is missing.');
+                return;
+            }
+
+            try {
                 const response = await axios.get(`${API_BASE_URL}/events`, {
                     headers: { 
                         email: userData.email,
-                        Authorization: `Bearer ${token}` // Include the token in the headers
+                        Authorization: `Bearer ${token}`
                     }
                 });
-                const dbEvents = response.data.events;
+
+                const dbEvents = response.data.events || [];
                 setEvents(dbEvents);
                 await storeEvents(dbEvents);
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    // Token might be expired, try refreshing it
+                    token = await refreshToken();
+                    const response = await axios.get(`${API_BASE_URL}/events`, {
+                        headers: { 
+                            email: userData.email,
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    const dbEvents = response.data.events || [];
+                    setEvents(dbEvents);
+                    await storeEvents(dbEvents);
+                } else {
+                    throw error;
+                }
             }
         } catch (error) {
-            console.error('Error syncing events with DB:', error);
+            console.error('Error syncing events with DB:', error.response?.data || error.message);
         }
     };
 

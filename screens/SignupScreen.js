@@ -4,12 +4,12 @@ import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
 import axios from 'axios';
 import PasswordInput from '../components/PasswordInput'; // Import the new component
-import { API_BASE_URL, ReminderFrequency, ReminderRange } from '../assets/constants.js'; // Import API base URL
+import { API_BASE_URL, ReminderFrequency, ReminderRange, validateEmail } from '../assets/constants.js'; // Import API base URL
 import { AppContext } from '../context/AppContext'; // Import AppContext
 
 const SignupScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext) || { colors: { background: '#fff', text: '#000', overlay: '#000' } };
-  const { signupUser, resendOTP, storeUserData, removeUserData } = useContext(AppContext); // Use context functions
+  const { sendOTP, resendOTP, storeUserData, removeUserData } = useContext(AppContext); // Use context functions
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,45 +75,15 @@ const SignupScreen = ({ navigation }) => {
     return Object.keys(validationErrors).length === 0;
   };
 
-  // Email Format Validation
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
-
   // Handle Signup
   const handleSignup = async () => {
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-        // Store user data in local storage
-        const userData = {
-          loggedIn:true,
-            name,
-            email,
-            password,
-            events: [],
-            mobile: '',
-            loggedIn: true,
-            settings: {
-                theme: theme.name,
-                dataSharing: false,
-                cloudStorage: false,
-                notifications: true,
-                reminder: {
-                    range: ReminderRange.MONTH,
-                    frequency: ReminderFrequency.MONTHLY,
-                },
-            },
-            signupDate: new Date().toISOString(),
-        };
-        const message = await signupUser(userData);
+        const message = await sendOTP(email);
         Alert.alert('Success', message);
         setIsOtpSent(true); // Set OTP sent state to true
         setResendTimer(50); // Reset resend timer
-        await removeUserData(); // Remove previous user data if exists
-        await storeUserData(userData); // Store new user data
-        console.log('User data stored:', userData);
     } catch (error) {
         Alert.alert('Error', error.message);
     } finally {
@@ -127,7 +97,7 @@ const SignupScreen = ({ navigation }) => {
       const message = await resendOTP(email);
       Alert.alert('Success', message);
       setResendTimer(50);
-      setOtpExpiry(new Date().getTime() + 5 * 60 * 1000); // Reset OTP expiry
+      setOtpExpiry(new Date().getTime() + 5 * 60 * 1000);
     } catch (error) {
       Alert.alert('Error', error.message);
     }
@@ -142,13 +112,34 @@ const SignupScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+      setIsLoading(true);
+      const userData = {
         email,
         otp,
-      });
+        name,
+        password,
+        mobile: '',
+        events: [],
+        settings: {
+            theme: theme.name,
+            dataSharing: false,
+            cloudStorage: false,
+            notifications: true,
+            reminder: {
+                range: ReminderRange.MONTH,
+                frequency: ReminderFrequency.MONTHLY,
+            },
+        },
+        signupDate: new Date().toISOString(),
+    };
+      const response = await axios.post(`${API_BASE_URL}/verify-otp`, userData);
 
       if (response.status === 200) {
+        const { userData } = response.data;
         Alert.alert('Success', 'Account verified successfully!');
+        await removeUserData(); // Remove previous user data if exists
+        await storeUserData(userData); // Store new user data
+        console.log('User data stored:', userData);
         navigation.replace('Main');
       } else {
         Alert.alert('Error', 'Invalid OTP.');
@@ -156,6 +147,9 @@ const SignupScreen = ({ navigation }) => {
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Failed to verify OTP.');
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 

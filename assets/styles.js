@@ -127,6 +127,7 @@ const globalStyles = StyleSheet.create({
     fontSize: 14,
     marginTop: 5,
     fontStyle: 'italic',
+    height: 15
 },
 
   // Inputs
