@@ -9,7 +9,7 @@ import { API_BASE_URL } from '../assets/constants';
 
 const PasswordResetScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext);
-  const { resetPassword, resendOTP } = useContext(AppContext); // Use context functions
+  const { resetPassword, resendOTP, loginUser, storeUserData } = useContext(AppContext); // Use context functions
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -110,7 +110,12 @@ const PasswordResetScreen = ({ navigation }) => {
       try {
         await resetPassword(email, password);
         Alert.alert('Success', 'Password reset successful!');
-        navigation.navigate('Login');
+        const loginResponse = await loginUser(email, password);
+        const data = await loginResponse.data;
+        if (loginResponse.status === 200) {
+          await storeUserData(data.userData);
+          navigation.replace('Main');
+        }
       } catch (error) {
         Alert.alert('Error', error.message);
       }

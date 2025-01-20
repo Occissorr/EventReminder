@@ -208,6 +208,18 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // API: Reset Password
+    const resetPassword = async (email, newPassword) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/reset-password`, { email, newPassword });
+            if (response.status === 200) {
+                return response.data.message;
+            }
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to reset password');
+        }
+    };
+
     // Function to schedule DB syncing
     const scheduleDBSync = () => {
         setInterval(async () => {
@@ -265,6 +277,7 @@ export const AppProvider = ({ children }) => {
                 isConnected,
                 refreshToken,
                 getEvents,
+                resetPassword,
             }}
         >
             {children}
