@@ -1,5 +1,6 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { Button, Text, View, Switch, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 import { AppContext } from '../../context/AppContext';
 
@@ -11,15 +12,21 @@ const PrivacyScreen = ({ navigation }) => {
     const [notifications, setNotifications] = useState(userData?.notifications || true);
     const [cloudStorage, setCloudStorage] = useState(userData?.cloudStorage || false);
 
-    useEffect(() => {
-        const updatedUserData = {
-            ...userData,
-            dataSharing,
-            notifications,
-            cloudStorage,
-        };
-        storeUserData(updatedUserData);
-    }, [dataSharing, notifications, cloudStorage]);
+    useFocusEffect(
+        React.useCallback(() => {
+            return () => {
+                const updatedUserData = {
+                    ...userData,
+                    settings: {
+                        dataSharing: dataSharing,
+                        notifications: notifications,
+                        cloudStorage: cloudStorage,
+                    }
+                };
+                storeUserData(updatedUserData);
+            };
+        }, [dataSharing, notifications, cloudStorage])
+    );
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>

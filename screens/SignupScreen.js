@@ -4,12 +4,14 @@ import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
 import axios from 'axios';
 import PasswordInput from '../components/PasswordInput'; // Import the new component
-import { API_BASE_URL, ReminderFrequency, ReminderRange, validateEmail } from '../assets/constants.js'; // Import API base URL
+import { API_BASE_URL, ReminderFrequency, ReminderRange, validateEmail } from '../assets/constants.js';
 import { AppContext } from '../context/AppContext'; // Import AppContext
+import { checkInternetConnectivity } from '../utils/network.js';
 
 const SignupScreen = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext) || { colors: { background: '#fff', text: '#000', overlay: '#000' } };
-  const { sendOTP, resendOTP, storeUserData, removeUserData } = useContext(AppContext); // Use context functions
+  const { theme } = useContext(ThemeContext) ||
+    { colors: { background: '#fff', text: '#000', overlay: '#000' } };
+  const { sendOTP, resendOTP, storeUserData, removeUserData } = useContext(AppContext);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,7 +66,7 @@ const SignupScreen = ({ navigation }) => {
       validationErrors.password =
         'Password must be at least 8 characters long, include a number, an uppercase letter, and a special character.';
     }
-    
+
 
     // Confirm Password Validation
     if (password !== confirmPassword) {
@@ -78,18 +80,20 @@ const SignupScreen = ({ navigation }) => {
   // Handle Signup
   const handleSignup = async () => {
     if (!validateForm()) return;
+    const isConnected = await checkInternetConnectivity();
+    if (!isConnected) return;
     setIsLoading(true);
     try {
-        const message = await sendOTP(email);
-        Alert.alert('Success', message);
-        setIsOtpSent(true); // Set OTP sent state to true
-        setResendTimer(50); // Reset resend timer
+      const message = await sendOTP(email);
+      Alert.alert('Success', message);
+      setIsOtpSent(true); // Set OTP sent state to true
+      setResendTimer(50); // Reset resend timer
     } catch (error) {
-        Alert.alert('Error', error.message);
+      Alert.alert('Error', error.message);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   // Handle OTP Resend
   const handleResendOtp = async () => {
@@ -101,7 +105,7 @@ const SignupScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert('Error', error.message);
     }
-  };  
+  };
 
   // Handle OTP Verification
   const handleOtpVerification = async () => {
@@ -110,6 +114,9 @@ const SignupScreen = ({ navigation }) => {
       Alert.alert('Error', 'OTP has expired. Please request a new one.');
       return;
     }
+
+    const isConnected = await checkInternetConnectivity();
+    if (!isConnected) return;
 
     try {
       setIsLoading(true);
@@ -121,17 +128,17 @@ const SignupScreen = ({ navigation }) => {
         mobile: '',
         events: [],
         settings: {
-            theme: theme.name,
-            dataSharing: false,
-            cloudStorage: false,
-            notifications: true,
-            reminder: {
-                range: ReminderRange.MONTH,
-                frequency: ReminderFrequency.MONTHLY,
-            },
+          theme: theme.name,
+          dataSharing: false,
+          cloudStorage: false,
+          notifications: true,
+          reminder: {
+            range: ReminderRange.MONTH,
+            frequency: ReminderFrequency.MONTHLY,
+          },
         },
         signupDate: new Date().toISOString(),
-    };
+      };
       const response = await axios.post(`${API_BASE_URL}/verify-otp`, userData);
 
       if (response.status === 200) {
@@ -139,16 +146,14 @@ const SignupScreen = ({ navigation }) => {
         Alert.alert('Success', 'Account verified successfully!');
         await removeUserData(); // Remove previous user data if exists
         await storeUserData(userData); // Store new user data
-        console.log('User data stored:', userData);
         navigation.replace('Main');
       } else {
         Alert.alert('Error', 'Invalid OTP.');
       }
     } catch (error) {
-      console.error(error);
       Alert.alert('Error', 'Failed to verify OTP.');
     }
-    finally{
+    finally {
       setIsLoading(false);
     }
   };
@@ -167,7 +172,7 @@ const SignupScreen = ({ navigation }) => {
         accessible={true}
         accessibilityLabel="Name"
       />
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+      {errors.name && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.name}</Text>}
 
       {/* Email Input */}
       <TextInput
@@ -179,7 +184,7 @@ const SignupScreen = ({ navigation }) => {
         accessible={true}
         accessibilityLabel="Email"
       />
-      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+      {errors.email && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.email}</Text>}
 
       {/* Password Input */}
       <PasswordInput
@@ -193,7 +198,7 @@ const SignupScreen = ({ navigation }) => {
         accessible={true}
         accessibilityLabel="Password"
       />
-      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+      {errors.password && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.password}</Text>}
 
       {/* Confirm Password Input */}
       <PasswordInput
@@ -207,7 +212,7 @@ const SignupScreen = ({ navigation }) => {
         accessible={true}
         accessibilityLabel="Confirm Password"
       />
-      {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+      {errors.confirmPassword && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.confirmPassword}</Text>}
 
       {/* Signup Button */}
       {!isOtpSent ? (
@@ -253,12 +258,6 @@ const styles = StyleSheet.create({
   button: globalStyles.button,
   buttonText: globalStyles.buttonText,
   anchor: globalStyles.anchor,
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-  },
   resendText: {
     color: 'gray',
     fontSize: 12,

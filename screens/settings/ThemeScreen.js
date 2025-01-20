@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemeContext } from '../../context/ThemeContext.js';
 import { AppContext } from '../../context/AppContext'; // Import AppContext
+import { useFocusEffect } from '@react-navigation/native';
 
 const ThemeScreen = () => {
   const { theme, setThemeByName, themes } = useContext(ThemeContext);
@@ -9,12 +10,20 @@ const ThemeScreen = () => {
 
   const handleThemeChange = (themeName) => {
     setThemeByName(themeName);
-    const updatedUserData = {
-      ...userData,
-      theme: themeName,
-    };
-    storeUserData(updatedUserData); // Store updated user data with new theme name
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const themeName = theme.name;
+      return () => {
+        const updatedUserData = {
+          ...userData,
+          theme: themeName,
+        };
+        storeUserData(updatedUserData);
+      };
+    }, [theme])
+  );
 
   useEffect(() => {
     if (userData?.theme) {

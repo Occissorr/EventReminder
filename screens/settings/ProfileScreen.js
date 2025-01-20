@@ -91,12 +91,16 @@ const ProfileScreen = () => {
 
   return (
     <View style={[globalStyles.container, { backgroundColor: bgColor }]}>
-
       {/* Edit Button */}
       {!isEditing && (
-        <TouchableOpacity style={[style.editButton, { backgroundColor: theme.colors.highlight}]} onPress={handleEdit}>
-          <Text style={globalStyles.buttonText}>Edit</Text>
-        </TouchableOpacity>
+        <View style={styles.editButtonContainer}>
+          <TouchableOpacity
+            style={[styles.editButton, { backgroundColor: theme.colors.highlight }]}
+            onPress={handleEdit}
+          >
+            <Text style={globalStyles.buttonText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {fields.map((field, index) => (
@@ -128,25 +132,25 @@ const ProfileScreen = () => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={globalStyles.modalContainer}>
-          <View style={globalStyles.modalContent}>
-            <Text style={globalStyles.modalText}>
+          <View style={[globalStyles.modalContent, { backgroundColor: theme.colors.background }]}>
+            <Text style={[globalStyles.modalText, { color: theme.colors.text }]}>
               You have unsaved changes. Do you want to save them?
             </Text>
-            <View style={globalStyles.modalButtons}>
+            <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={globalStyles.modalButtonSave}
+                style={[styles.modalButtonSave, { backgroundColor: theme.colors.highlight }]}
                 onPress={() => {
                   handleSave();
                   setModalVisible(false);
                 }}
               >
-                <Text style={style.modalButtonText}>Save</Text>
+                <Text style={[styles.modalButtonText, {color: theme.colors.text}]}>Save</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={globalStyles.modalButtonDiscard}
+                style={[styles.modalButtonDiscard, { backgroundColor: 'red' }]}
                 onPress={handleDiscardChanges}
               >
-                <Text style={style.modalButtonText}>Discard</Text>
+                <Text style={[styles.modalButtonText, {color: theme.colors.text}]}>Discard</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -156,24 +160,38 @@ const ProfileScreen = () => {
   );
 }
 
-const style = StyleSheet.create({
-  editButton: {
-    alignSelf: 'flex-end',
+const styles = StyleSheet.create({
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButtonSave: {
+    flex: 1,
     padding: 10,
     borderRadius: 8,
-  }, 
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  modalButtonDiscard: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 10,
   },
   modalButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  passwordContainer: {
-    marginVertical: 10,
+  editButtonContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
   },
-})
+  editButton: {
+    padding: 10,
+    borderRadius: 8,
+  },
+});
+
 export default ProfileScreen;

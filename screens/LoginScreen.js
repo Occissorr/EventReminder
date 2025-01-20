@@ -6,6 +6,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { AppContext } from '../context/AppContext';
 import PasswordInput from '../components/PasswordInput';
 import { validateEmail } from '../assets/constants';
+import { checkInternetConnectivity } from '../utils/network';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -16,36 +17,21 @@ const LoginScreen = ({ navigation }) => {
 
   // Handle user login
   const handleLogin = async () => {
-    if(!email || !password) {
+    if (!email || !password) {
       return;
-    }else if(!validateEmail(email)) {
-      setErrors({ login: `Enter a valid Email !` });
+    } else if (!validateEmail(email)) {
+      setErrors({ login: 'Enter a valid Email!' });
       return;
     }
+
+    const isConnected = await checkInternetConnectivity();
+    if (!isConnected) return;
+
     try {
       const response = await loginUser(email, password);
-      const data = await response.json();
-      if (response.ok) {
-        const userData = {
-          loggedIn: true,
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          events: [],
-          mobile: data.mobile || '',
-          settings: {
-            theme: theme.name,
-            dataSharing: false,
-            cloudStorage: false,
-            notifications: true,
-            reminder: {
-              range: ReminderRange.MONTH,
-              frequency: ReminderFrequency.MONTHLY,
-            },
-          },
-          signupDate: new Date().toISOString(),
-        };
-        await storeUserData(userData);
+      const data = await response.data;
+      if (response.status === 200) {
+        await storeUserData(data.userData);
         navigation.replace('Main');
       } else {
         setErrors({ login: data.message });
@@ -71,7 +57,7 @@ const LoginScreen = ({ navigation }) => {
       { text: 'Cancel', onPress: () => null, style: 'cancel' },
       { text: 'Yes', onPress: () => BackHandler.exitApp() },
     ]);
-    return true; // Prevent default back action
+    return true;
   };
 
   useFocusEffect(
@@ -112,7 +98,7 @@ const LoginScreen = ({ navigation }) => {
         containerStyle={[{ marginBottom: 20, backgroundColor: theme.colors.background }, styles.width, ]}
         iconColor={theme.colors.overlay}
       />
-      {errors.login && <Text style={styles.errorText}>{errors.login}</Text>}
+      {errors.login && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.login}</Text>}
       <TouchableOpacity style={globalStyles.buttonPrimary} onPress={handleLogin}>
         <Text style={globalStyles.buttonText}>Login</Text>
       </TouchableOpacity>
@@ -130,13 +116,6 @@ const styles = StyleSheet.create({
   },
   width: {
     maxWidth: 300,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-    height: 15
   },
 });
 

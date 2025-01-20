@@ -17,8 +17,11 @@ import SettingsScreen from '../screens/SettingsScreen.js';
 import ThemeScreen from '../screens/settings/ThemeScreen.js';
 import ProfileScreen from '../screens/settings/ProfileScreen.js';
 import ReminderScreen from '../screens/settings/ReminderScreen.js';
+import PrivacyScreen from '../screens/settings/PrivacyScreen.js';
 import NotificationPreferencesScreen from '../screens/settings/NotificationPreferencesScreen.js';
 import PasswordResetScreen from '../screens/PasswordresetScreen.js';
+
+//Loader
 import Loader from '../components/Loader.js';
 
 const Stack = createStackNavigator();
@@ -48,13 +51,12 @@ const HomeTabs = () => {
 };
 
 const AppNavigator = () => {
-  const { userData, loadUserData } = useContext(AppContext);
+  const { userData } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initialize = async () => {
-      await loadUserData();
-      setLoading(false);
+      userData && setLoading(false);
     };
     initialize();
   }, []);
@@ -72,6 +74,8 @@ const AppNavigator = () => {
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Reminder" component={ReminderScreen} />
           <Stack.Screen name="Addevent" component={AddEventScreen} />
+          <Stack.Screen name="Privacy" component={PrivacyScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} />
         </Stack.Navigator>
       ) : (

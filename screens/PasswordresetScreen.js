@@ -1,10 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { globalStyles, colors } from '../assets/styles';
+import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
 import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
 import { AppContext } from '../context/AppContext'; // Import AppContext
+import { API_BASE_URL } from '../assets/constants';
 
 const PasswordResetScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext);
@@ -72,7 +73,7 @@ const PasswordResetScreen = ({ navigation }) => {
       return;
     }
     try {
-      const response = await axios.post('http://127.0.0.1:5000/verify-otp', { email, otp });
+      const response = await axios.post(`${API_BASE_URL}/verify-otp`, { email, otp });
       if (response.status === 200) {
         Alert.alert('Success', 'OTP verified! You can now reset your password.');
       } else {
@@ -130,7 +131,7 @@ const PasswordResetScreen = ({ navigation }) => {
             onChangeText={setEmail}
             placeholderTextColor={theme.colors.text}
           />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          {errors.email && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.email}</Text>}
           <TouchableOpacity style={[styles.button ]} onPress={handleRequestOtp}>
             <Text style={styles.buttonText}>Request OTP</Text>
           </TouchableOpacity>
@@ -174,7 +175,7 @@ const PasswordResetScreen = ({ navigation }) => {
               <FontAwesome name={showPassword ? "eye-slash" : "eye"} size={24} color={theme.colors.overlay} />
             </TouchableOpacity>
           </View>
-          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          {errors.password && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.password}</Text>}
 
           <View style={styles.passwordContainer}>
             <TextInput
@@ -189,7 +190,7 @@ const PasswordResetScreen = ({ navigation }) => {
               <FontAwesome name={showConfirmPassword ? "eye-slash" : "eye"} size={24} color={theme.colors.overlay} />
             </TouchableOpacity>
           </View>
-          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+          {errors.confirmPassword && <Text style={[globalStyles.errorText, { color: theme.colors.error }]}>{errors.confirmPassword}</Text>}
 
           <TouchableOpacity style={[styles.button, styles.margin]} onPress={handleResetPassword}>
             <Text style={styles.buttonText}>Reset Password</Text>
@@ -211,12 +212,6 @@ const styles = StyleSheet.create({
   button: globalStyles.button,
   buttonText: globalStyles.buttonText,
   anchor: globalStyles.anchor,
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-  },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
