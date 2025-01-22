@@ -2,14 +2,12 @@ import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
-import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
-import { AppContext } from '../context/AppContext'; // Import AppContext
-import { API_BASE_URL } from '../assets/constants';
+import { AppContext } from '../context/AppContext';
 
 const PasswordResetScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext);
-  const { resetPassword, resendOTP, loginUser, storeUserData } = useContext(AppContext); // Use context functions
+  const { resetPassword, resendOTP, loginUser, storeUserData, verifyOTP } = useContext(AppContext); // Use context functions
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -73,7 +71,7 @@ const PasswordResetScreen = ({ navigation }) => {
       return;
     }
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-otp`, { email, otp });
+      const response = await verifyOTP({ email, otp });
       if (response.status === 200) {
         Alert.alert('Success', 'OTP verified! You can now reset your password.');
       } else {

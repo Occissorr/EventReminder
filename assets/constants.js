@@ -19,12 +19,6 @@ export const ReminderRange = {
     YEAR: 'Year',
 };
 
-export const rangeDays = {
-    Weekly: 7,
-    Monthly: 30,
-    Yearly: 365,
-}[range] || 30;
-
 //#region Functions
 
 /**

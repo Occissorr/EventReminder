@@ -56,7 +56,7 @@ const AppNavigator = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      userData && setLoading(false);
+      setLoading(false);
     };
     initialize();
   }, []);

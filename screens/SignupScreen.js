@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { globalStyles } from '../assets/styles';
 import { ThemeContext } from '../context/ThemeContext';
-import axios from 'axios';
 import PasswordInput from '../components/PasswordInput'; // Import the new component
 import { API_BASE_URL, ReminderFrequency, ReminderRange, validateEmail } from '../assets/constants.js';
 import { AppContext } from '../context/AppContext'; // Import AppContext
@@ -11,7 +10,7 @@ import { checkInternetConnectivity } from '../utils/network.js';
 const SignupScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext) ||
     { colors: { background: '#fff', text: '#000', overlay: '#000' } };
-  const { sendOTP, resendOTP, storeUserData, removeUserData } = useContext(AppContext);
+  const { sendOTP, resendOTP, storeUserData, removeUserData, verifyOTP } = useContext(AppContext);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -79,10 +78,10 @@ const SignupScreen = ({ navigation }) => {
 
   // Handle Signup
   const handleSignup = async () => {
+    setIsLoading(true);
     if (!validateForm()) return;
     const isConnected = await checkInternetConnectivity();
     if (!isConnected) return;
-    setIsLoading(true);
     try {
       const message = await sendOTP(email);
       Alert.alert('Success', message);
@@ -120,9 +119,9 @@ const SignupScreen = ({ navigation }) => {
 
     try {
       setIsLoading(true);
+      Alert.alert('Success', message);
       const userData = {
         email,
-        otp,
         name,
         password,
         mobile: '',
@@ -139,21 +138,13 @@ const SignupScreen = ({ navigation }) => {
         },
         signupDate: new Date().toISOString(),
       };
-      const response = await axios.post(`${API_BASE_URL}/verify-otp`, userData);
-
-      if (response.status === 200) {
-        const { userData } = response.data;
-        Alert.alert('Success', 'Account verified successfully!');
-        await removeUserData(); // Remove previous user data if exists
-        await storeUserData(userData); // Store new user data
-        navigation.replace('Main');
-      } else {
-        Alert.alert('Error', 'Invalid OTP.');
-      }
+      const message = await verifyOTP(email, otp, userData);
+      await removeUserData(); // Remove previous user data if exists
+      await storeUserData(userData); // Store new user data
+      navigation.replace('Main');
     } catch (error) {
-      Alert.alert('Error', 'Failed to verify OTP.');
-    }
-    finally {
+      Alert.alert('Error', error.message);
+    } finally {
       setIsLoading(false);
     }
   };

@@ -12,13 +12,11 @@ import { ThemeContext } from '../context/ThemeContext';
 import { AppContext } from '../context/AppContext';
 
 const SettingsScreen = ({ navigation }) => {
-  const { storeUserData, userData, removeUserData } = useContext(AppContext);
+  const { removeUserData } = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
 
   const confirmLogout = async () => {
     try {
-      const updatedUserData = { ...userData, loggedIn: false };
-      await storeUserData(updatedUserData);
       await removeUserData();
       navigation.replace('Login');
     } catch (error) {

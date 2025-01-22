@@ -31,8 +31,8 @@ const LoginScreen = ({ navigation }) => {
       const response = await loginUser(email, password);
       const data = await response.data;
       if (response.status === 200) {
-        await storeUserData(data.userData);
-        navigation.replace('Main');
+        await storeUserData(data);
+        //navigation.replace('Main');
       } else {
         setErrors({ login: data.message });
       }

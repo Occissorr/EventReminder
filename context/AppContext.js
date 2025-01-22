@@ -63,7 +63,7 @@ export const AppProvider = ({ children }) => {
     };
 
     // Load user data from AsyncStorage
-    const loadUserData = async (email = '') => {
+    const loadUserData = async () => {
         try {
             const localUserData = await AsyncStorage.getItem('userData');
             if (localUserData) {
@@ -73,7 +73,7 @@ export const AppProvider = ({ children }) => {
                 if (response.status === 200) {
                     setUsersArr(response.data['users']);
                     if(data !== '') {
-                        const user = response.data['users'].find(user => user.email === email);
+                        const user = response.data['users'].find(user => user.email === userData.email);
                         if(user){
                             setUserData(user);
                         }
@@ -88,8 +88,12 @@ export const AppProvider = ({ children }) => {
     // Store user data in AsyncStorage
     const storeUserData = async (userData) => {
         try {
-            setUserData(userData);
-            await AsyncStorage.setItem('userData', JSON.stringify(userData));
+            if (userData) {
+                setUserData(userData);
+                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+            } else {
+                console.log('User data is undefined, not storing in AsyncStorage.');
+            }
         } catch (error) {
             console.log('Failed to store user data:', error);
         }
@@ -109,15 +113,69 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // Store OTP in AsyncStorage
+    const storeOTP = async (otp) => {
+        try {
+            await AsyncStorage.setItem('otp', otp);
+        } catch (e) {
+            console.log('Error storing OTP:', e);
+        }
+    };
+
+    // Remove OTP from AsyncStorage
+    const removeOTP = async () => {
+        try {
+            await AsyncStorage.removeItem('otp');
+        } catch (e) {
+            console.log('Error removing OTP:', e);
+        }
+    };
+
+    // Store token in AsyncStorage
+    const storeToken = async (token) => {
+        try {
+            await AsyncStorage.setItem('authToken', token);
+        } catch (e) {
+            console.log('Error storing token:', e);
+        }
+    };
+
+    //Set Logged In
+    const toggleLoggedIn = async (state) => {
+        try {
+            await AsyncStorage.setItem('loggedIn', state);
+        } catch (e) {
+            console.log('Error storing token:', e);
+        }
+    };
+
     // API: Send OTP
     const sendOTP = async (email) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/send-otp`, { email });
             if (response.status === 200) {
+                await storeOTP(response.data.otp);
                 return response.data.message;
             }
         } catch (error) {
             throw new Error(error.response?.data?.message || 'Failed to send OTP');
+        }
+    };
+
+    // API: Verify OTP
+    const verifyOTP = async (email, otp, userData = null) => {
+        try {
+            const sentOtp = await AsyncStorage.getItem('otp');
+            if(sentOtp && sentOtp === otp){
+                removeOTP();
+                if(userData) {
+                    toggleLoggedIn(true);
+                    return await axios.post(`${API_BASE_URL}/update-user`, userData);
+                }
+                else return {"message": "Otp Verified"}, 200
+            }
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to verify OTP');
         }
     };
 
@@ -127,7 +185,7 @@ export const AppProvider = ({ children }) => {
             const response = await axios.post(`${API_BASE_URL}/login`, { email, password });
             if (response.status === 200) {
                 const { token, userData } = response.data;
-                token && await AsyncStorage.setItem('authToken', token);
+                await storeToken(token);
                 if (userData) {
                     await AsyncStorage.setItem('userData', JSON.stringify(userData));
                     setUserData(userData);
@@ -144,6 +202,7 @@ export const AppProvider = ({ children }) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/resend-otp`, { email });
             if (response.status === 200) {
+                await storeOTP(response.data.otp);
                 return response.data.message;
             }
         } catch (error) {
@@ -201,7 +260,16 @@ export const AppProvider = ({ children }) => {
     const pushUserDataToDB = async () => {
         try {
             if (userData?.email) {
-                await axios.post(`${API_BASE_URL}/update-user`, userData);
+                const updatedUserData = {
+                    email: userData.email,
+                    name: userData.name,
+                    events: userData.events,
+                    mobile: userData.mobile,
+                    settings: userData.settings,
+                    signupDate: userData.signupDate,
+                    password: userData.password
+                };
+                await axios.post(`${API_BASE_URL}/update-user`, updatedUserData);
             }
         } catch (error) {
             console.log('Error pushing user data to DB:', error);
@@ -236,7 +304,7 @@ export const AppProvider = ({ children }) => {
         checkInternetConnectivity();
         loadUserData();
         loadEvents();
-        scheduleDBSync(); // Schedule DB syncing
+        scheduleDBSync();
     }, []);
 
     useEffect(() => {
@@ -269,6 +337,7 @@ export const AppProvider = ({ children }) => {
                 storeUserData,
                 removeUserData,
                 sendOTP,
+                verifyOTP,
                 loginUser,
                 resendOTP,
                 pushUserDataToDB,
@@ -278,6 +347,7 @@ export const AppProvider = ({ children }) => {
                 refreshToken,
                 getEvents,
                 resetPassword,
+                toggleLoggedIn,
             }}
         >
             {children}

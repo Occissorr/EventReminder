@@ -48,3 +48,5 @@ const scheduleUpcomingNotification = async (event) => {
         trigger: { seconds: 5 }, // Trigger after 5 seconds (for testing)
     });
 };
+
+export { scheduleNotifications }; // Export the function
